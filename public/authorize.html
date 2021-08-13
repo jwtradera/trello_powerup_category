@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="https://p.trellocdn.com/power-up.min.css" />
+    <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  </head>
+  <body>
+    <button id="auth-btn" type="submit" class="mod-primary">
+      Authorize Card Snooze to Access Trello
+    </button>
+    <script>
+      window.Promise = TrelloPowerUp.Promise;
+      var t = TrelloPowerUp.iframe();
+
+      var trelloAuthUrl = "https://trello.com/1/authorize?";
+      var apiKey = t.arg("apiKey");
+      var appName = "Trello App";
+
+      // you'll want to update these for your own app :)
+      var authParams = {
+        name: appName,
+        expiration: "never",
+        scope: "read,write",
+        key: apiKey,
+        callback_method: "fragment",
+        return_url: "https://" + window.location.host + "/auth-success.html"
+      };
+
+      var params = Object.keys(authParams);
+      params.forEach(function(param) {
+        trelloAuthUrl +=
+          param + "=" + encodeURIComponent(authParams[param]) + "&";
+      });
+
+      var tokenLooksValid = function(token) {
+        return /^[0-9a-f]{64}$/.test(token);
+      };
+
+      document.getElementById("auth-btn").addEventListener("click", function() {
+        t.authorize(trelloAuthUrl, {
+          height: 680,
+          width: 580,
+          validToken: tokenLooksValid
+        })
+          .then(function(token) {
+            return t.set("member", "private", "token", token);
+          })
+          .then(function() {
+            return t.popup({
+              title: "Set category",
+              url: "./modal.html",
+              args: {
+                apiKey: apiKey
+              },
+              height: 200
+            });
+          });
+      });
+    </script>
+  </body>
+</html>
